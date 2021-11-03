@@ -17,7 +17,7 @@ def confidenceInterval(x, cl=0.99):
     return x_hat, s, lowerBound, upperBound, rel_err, accuracy
 
 
-def run(noStudents, noEvaluators, noHomeworks, stdQuality, stdEvaluation):
+def run(noStudents, noEvaluators, noHomeworks, stdQuality, stdEvaluation, uni):
     X = np.empty(shape=noStudents, dtype=np.float64)
     for s in range(noStudents):
         X[s] = np.random.uniform(0,1)
@@ -31,9 +31,14 @@ def run(noStudents, noEvaluators, noHomeworks, stdQuality, stdEvaluation):
         # m = rv.mean()
         # std = rv.std()
         for h in range(noHomeworks):
-            # Q[s][h] = X[s]
-            Q[s][h] = rv.rvs(size=1)
-            # Q[s][h] = truncnorm.rvs(a=a, b=b, loc=mean, scale=stdQuality, size=1) 
+            if uni is False:
+                Q[s][h] = rv.rvs(size=1)
+            else:
+                delta = min(mean,0.1,1-mean)
+                a = mean - delta
+                b = mean + delta
+                Q[s][h] = np.random.uniform(a,b)
+            
         # m = Q.mean(axis=1)
         # print("mean",mean)
         # print("m",m)
@@ -47,9 +52,14 @@ def run(noStudents, noEvaluators, noHomeworks, stdQuality, stdEvaluation):
             a, b = (0 - mean) / stdEvaluation, (1 - mean) / stdEvaluation
             rv = truncnorm(a=a, b=b, loc=mean, scale=stdEvaluation)
             for k in range(noEvaluators):
-                # E[s][h][k] = Q[s][h]
-                E[s][h][k] = rv.rvs(size=1)
-                # E[k][s][h] = truncnorm.rvs(a=a, b=b, loc=mean, scale=stdEvaluation, size=1)
+                if uni is False:
+                    E[s][h][k] = rv.rvs(size=1)
+                else:
+                    delta = min(mean,0.1,1-mean)
+                    a = mean - delta
+                    b = mean + delta
+                    E[s][h][k] = np.random.uniform(a,b)
+                
 
     # Q_hat = E.mean(axis=0) 
     Q_hat = E.mean(axis=2, dtype=np.float64) 
@@ -74,20 +84,21 @@ def run(noStudents, noEvaluators, noHomeworks, stdQuality, stdEvaluation):
 def main():
     parser = argparse.ArgumentParser(description='Lab 2 - Simulator')
     parser.add_argument("-s", "--seed", type=int, default=421, help="Initilizing seed - Default is 42")
-    parser.add_argument("-S", "--noStudents", type=int, default=20, help="Number of samples - Default is 150")
-    parser.add_argument("-K", "--noEvaluators", type=int, default=2, help='Number of evaluations receive for each delivery- Default is 2')
-    parser.add_argument("-H", "--noHomeworks", type=int, default=10, help='Number of homeworks done during one accademic year- Default is 4')
+    parser.add_argument("-S", "--noStudents", type=int, default=25, help="Number of samples - Default is 150")
+    # parser.add_argument("-K", "--noEvaluators", type=int, default=2, help='Number of evaluations receive for each delivery- Default is 2')
+    parser.add_argument("-H", "--noHomeworks", type=int, default=4, help='Number of homeworks done during one accademic year- Default is 4')
     parser.add_argument("-stdq", "--stdQuality", type=float, default=0.1, help="Standard deviation of the student homework quality")
     parser.add_argument("-stde", "--stdEvaluation", type=float, default=0.1, help="Standard deviation of the student evaluation skill")
-    # parser.add_argument("-sc", "--stoppingCondition", type=int, default=1, choices=[1,2,3,4,5], help="Stop the simulation when the desired relative error is reached - Default is 1%")
+    parser.add_argument("-U", "--uniform", action="store_true", help="Use this parameter if you want to use the uniform distribution for the quality of the homework and evaluation")
     args = parser.parse_args()
 
     seed = args.seed
     noStudents = args.noStudents
-    noEvaluators = args.noEvaluators
+    # noEvaluators = args.noEvaluators
     noHomeworks = args.noHomeworks
     stdQuality = args.stdQuality
     stdEvaluation = args.stdEvaluation
+    
 
     print(f"seed: {seed}")
     print(f"noStudents: {noStudents}")
@@ -99,9 +110,12 @@ def main():
      
 
     # ho bisogno di più run per ogni insieme di parametri
+    minK = 2 # Inclusive
+    maxK = 25 # Exclusive
     experiment_results = {"LB1":[],"hbh":[],"UB1":[],"LB2":[],"finalGrade":[],"UB2":[],"re1":[],"acc1":[],"re2":[],"acc2":[]}
-    experiment_list = range(2,8)
-    print("Starting Experiments***********************************************")
+    experiment_list = range(minK,maxK)
+    print("***********************************************")
+    print("Simulation:")
     # An experiment is made by 5 runs with the same input parameter set
     for noEvaluators in experiment_list: # Experimets
         np.random.seed(seed)
@@ -109,7 +123,7 @@ def main():
         results1 = np.empty(shape=5, dtype=np.float64)
         results2 = np.empty(shape=5, dtype=np.float64)
         for i in range(5): # 5 runs for each experiment
-            results1[i], results2[i] = run(noStudents, noEvaluators, noHomeworks, stdQuality, stdEvaluation)
+            results1[i], results2[i] = run(noStudents, noEvaluators, noHomeworks, stdQuality, stdEvaluation, args.uniform)
 
         x_hat, s, lowerBound, upperBound, rel_err, accuracy = confidenceInterval(results1)
         experiment_results["hbh"].append(x_hat)
@@ -125,31 +139,40 @@ def main():
         experiment_results["re2"].append(rel_err)
         experiment_results["acc2"].append(accuracy)
 
-    # prova a plottare acc vs noEvaluators magari migliora
+    if args.uniform is False:
+        title = f"Homework-by-Homework - S:{noStudents} H:{noHomeworks} K:[{minK},{maxK-1}] stdQ:{stdQuality} stdE:{stdEvaluation}"
+    else:
+        title = f"Homework-by-Homework - S:{noStudents} H:{noHomeworks} K:[{minK},{maxK-1}] - Uniform"
+    
     plt.figure(1)
-    plt.plot(experiment_list, experiment_results["hbh"], marker="o", label="hbh")
-    plt.plot(experiment_list, experiment_results["LB1"], marker="o", linestyle="dotted", label="LB1", alpha=0.6)
-    plt.plot(experiment_list, experiment_results["UB1"], marker="o", linestyle="dotted", label="UB1", alpha=0.6)    
+    plt.plot(experiment_list, experiment_results["hbh"], marker="o", label="Average Relative Grading Error")
+    plt.plot(experiment_list, experiment_results["LB1"], marker="o", linestyle="dotted", label="CI - LB", alpha=0.6)
+    plt.plot(experiment_list, experiment_results["UB1"], marker="o", linestyle="dotted", label="CI - UB", alpha=0.6)    
     plt.fill_between(experiment_list, experiment_results["LB1"], experiment_results["UB1"], color='b', alpha=0.1)
-    plt.ylabel("Rel err")
-    plt.xlabel("Number of evaluators")
+    plt.ylabel("Average Relative Grading Error")
+    plt.xlabel("K: Number of evaluation for each homework")
     plt.legend()
     plt.grid()
-    plt.title(f"hbh - S:{noStudents} H:{noHomeworks} stdQ:{stdQuality} stdE:{stdEvaluation}")
-    plt.savefig(f"hbh - S:{noStudents} H:{noHomeworks} stdQ:{stdQuality} stdE:{stdEvaluation}.png")
+    plt.title(title)
+    plt.savefig(title + ".png")
     plt.show()
 
+    if args.uniform is False:
+        title = f"Final Grade - S:{noStudents} H:{noHomeworks} K:[{minK},{maxK-1}] stdQ:{stdQuality} stdE:{stdEvaluation}"
+    else:
+        title = f"Final Grade - S:{noStudents} H:{noHomeworks} K:[{minK},{maxK-1}] - Uniform"
+
     plt.figure(2)
-    plt.plot(experiment_list, experiment_results["finalGrade"], marker="o", label="finalGrade")
-    plt.plot(experiment_list, experiment_results["LB2"], marker="o", linestyle="dotted", label="LB2", alpha=0.6)
-    plt.plot(experiment_list, experiment_results["UB2"], marker="o", linestyle="dotted", label="UB2", alpha=0.6)
+    plt.plot(experiment_list, experiment_results["finalGrade"], marker="o", label="Average Relative Grading Error")
+    plt.plot(experiment_list, experiment_results["LB2"], marker="o", linestyle="dotted", label="CI - LB", alpha=0.6)
+    plt.plot(experiment_list, experiment_results["UB2"], marker="o", linestyle="dotted", label="CI - UB", alpha=0.6)
     plt.fill_between(experiment_list, experiment_results["LB2"], experiment_results["UB2"], color='b', alpha=0.1)
-    plt.ylabel("Rel err")
-    plt.xlabel("Number of evaluators")
+    plt.ylabel("Average Relative Grading Error")
+    plt.xlabel("K: Number of evaluation for each homework")
     plt.legend()
     plt.grid()
-    plt.title(f"Final grade - S:{noStudents} H:{noHomeworks} stdQ:{stdQuality} stdE:{stdEvaluation}")
-    plt.savefig(f"Final grade - S:{noStudents} H:{noHomeworks} stdQ:{stdQuality} stdE:{stdEvaluation}.png")
+    plt.title(title)
+    plt.savefig(title + ".png")
     plt.show()
 
 if __name__ == "__main__":
