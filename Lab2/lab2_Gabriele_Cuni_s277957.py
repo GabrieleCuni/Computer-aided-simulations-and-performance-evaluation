@@ -18,29 +18,36 @@ def confidenceInterval(x, cl=0.99):
 
 
 def run(noStudents, noEvaluators, noHomeworks, stdQuality, stdEvaluation):
-    X = np.empty(shape=noStudents)
+    X = np.empty(shape=noStudents, dtype=np.float64)
     for s in range(noStudents):
         X[s] = np.random.uniform(0,1)
 
-    Q = np.empty(shape=(noStudents,noHomeworks))
+    Q = np.empty(shape=(noStudents,noHomeworks), dtype=np.float64)
     for s in range(noStudents):
         mean = X[s]
         a, b = (0 - mean) / stdQuality, (1 - mean) / stdQuality
         rv = truncnorm(a=a, b=b, loc=mean, scale=stdQuality)
+        # X[s] = rv.mean()
         # m = rv.mean()
         # std = rv.std()
         for h in range(noHomeworks):
+            # Q[s][h] = X[s]
             Q[s][h] = rv.rvs(size=1)
             # Q[s][h] = truncnorm.rvs(a=a, b=b, loc=mean, scale=stdQuality, size=1) 
+        # m = Q.mean(axis=1)
+        # print("mean",mean)
+        # print("m",m)
 
     # E = np.empty(shape=(noEvaluators,noStudents,noHomeworks))
-    E = np.empty(shape=(noStudents,noHomeworks, noEvaluators))
+    E = np.empty(shape=(noStudents,noHomeworks, noEvaluators), dtype=np.float64)
     for s in range(noStudents):
         for h in range(noHomeworks):
             mean = Q[s][h]
+            stdEvaluation = min((1-mean)/3,stdEvaluation,mean/3)
             a, b = (0 - mean) / stdEvaluation, (1 - mean) / stdEvaluation
             rv = truncnorm(a=a, b=b, loc=mean, scale=stdEvaluation)
             for k in range(noEvaluators):
+                # E[s][h][k] = Q[s][h]
                 E[s][h][k] = rv.rvs(size=1)
                 # E[k][s][h] = truncnorm.rvs(a=a, b=b, loc=mean, scale=stdEvaluation, size=1)
 
@@ -66,10 +73,10 @@ def run(noStudents, noEvaluators, noHomeworks, stdQuality, stdEvaluation):
 
 def main():
     parser = argparse.ArgumentParser(description='Lab 2 - Simulator')
-    parser.add_argument("-s", "--seed", type=int, default=42, help="Initilizing seed - Default is 42")
+    parser.add_argument("-s", "--seed", type=int, default=421, help="Initilizing seed - Default is 42")
     parser.add_argument("-S", "--noStudents", type=int, default=20, help="Number of samples - Default is 150")
-    parser.add_argument("-K", "--noEvaluators", type=int, default=3, help='Number of evaluations receive for each delivery- Default is 2')
-    parser.add_argument("-H", "--noHomeworks", type=int, default=15, help='Number of homeworks done during one accademic year- Default is 4')
+    parser.add_argument("-K", "--noEvaluators", type=int, default=2, help='Number of evaluations receive for each delivery- Default is 2')
+    parser.add_argument("-H", "--noHomeworks", type=int, default=10, help='Number of homeworks done during one accademic year- Default is 4')
     parser.add_argument("-stdq", "--stdQuality", type=float, default=0.1, help="Standard deviation of the student homework quality")
     parser.add_argument("-stde", "--stdEvaluation", type=float, default=0.1, help="Standard deviation of the student evaluation skill")
     # parser.add_argument("-sc", "--stoppingCondition", type=int, default=1, choices=[1,2,3,4,5], help="Stop the simulation when the desired relative error is reached - Default is 1%")
@@ -93,14 +100,14 @@ def main():
 
     # ho bisogno di più run per ogni insieme di parametri
     experiment_results = {"LB1":[],"hbh":[],"UB1":[],"LB2":[],"finalGrade":[],"UB2":[],"re1":[],"acc1":[],"re2":[],"acc2":[]}
-    experiment_list = range(2,19)
+    experiment_list = range(2,8)
     print("Starting Experiments***********************************************")
     # An experiment is made by 5 runs with the same input parameter set
     for noEvaluators in experiment_list: # Experimets
         np.random.seed(seed)
         print(f"noEvaluators: {noEvaluators}")
-        results1 = np.empty(shape=5)
-        results2 = np.empty(shape=5)
+        results1 = np.empty(shape=5, dtype=np.float64)
+        results2 = np.empty(shape=5, dtype=np.float64)
         for i in range(5): # 5 runs for each experiment
             results1[i], results2[i] = run(noStudents, noEvaluators, noHomeworks, stdQuality, stdEvaluation)
 
