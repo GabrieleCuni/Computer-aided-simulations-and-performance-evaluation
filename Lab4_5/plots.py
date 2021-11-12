@@ -5,7 +5,8 @@ import json
 def plot_graph(experiment_results):  
     title = f"seed={experiment_results['seed']} - noRuns={experiment_results['noRuns']} - CL={experiment_results['cl']} - d={experiment_results['d']} - alpha={experiment_results['alpha']}"
     plt.plot(experiment_results["n"], experiment_results["theo"], linestyle="dotted", label="Theoretical formula")  
-    plt.plot(experiment_results["n"], experiment_results["tub"], linestyle="dotted", label="Theoretical UB")
+    if experiment_results['d'] == 1:
+        plt.plot(experiment_results["n"], experiment_results["tub"], linestyle="dotted", label="Theoretical UB")
     plt.plot(experiment_results["n"], experiment_results["x_hat"], label='Average max bin occupancy',marker='o')
     plt.xscale("log")
     plt.fill_between(experiment_results["n"], experiment_results["CI_LB"], experiment_results["CI_UB"], color='b', alpha=.1, label="Confidence Interval")
@@ -23,12 +24,15 @@ def plotTheoreticalResult(seed, noRuns, cl):
     experiment_results1 = json.load(open(inputFileName))
     inputFileName = f"binsballs_seed={seed}_runs={noRuns}_d={2}_cl={cl}_alpha=1.txt"
     experiment_results2 = json.load(open(inputFileName))
+    inputFileName = f"binsballs_seed={seed}_runs={noRuns}_d={3}_cl={cl}_alpha=1.txt"
+    experiment_results3 = json.load(open(inputFileName))
     inputFileName = f"binsballs_seed={seed}_runs={noRuns}_d={4}_cl={cl}_alpha=1.txt"
     experiment_results4 = json.load(open(inputFileName))
 
     title = f"seed={experiment_results1['seed']} - noRuns={experiment_results1['noRuns']} - CL={experiment_results1['cl']} - alpha=1"
     plt.plot(experiment_results1["n"], experiment_results1["theo"], label="Random Dropping")
     plt.plot(experiment_results2["n"], experiment_results2["theo"], linestyle="dotted", label="Random Load Balancing d=2")
+    plt.plot(experiment_results3["n"], experiment_results3["theo"], linestyle="dotted", label="Random Load Balancing d=3")
     plt.plot(experiment_results4["n"], experiment_results4["theo"], linestyle="dotted", label="Random Load Balancing d=4")
     plt.ylabel("Maximum occupancy")
     plt.xlabel("n: Number of bins and balls")
