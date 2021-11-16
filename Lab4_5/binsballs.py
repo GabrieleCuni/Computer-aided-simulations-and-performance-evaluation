@@ -15,33 +15,6 @@ def confidenceInterval(x, cl=0.99):
     upperBound = x_hat + delta
     return x_hat, s, lowerBound, upperBound, rel_err, accuracy
 
-
-# def run_simulator(n, initial_seed, confidence_level, runs, d):  # run the bins-and-ball model for n bins and for multiple runs
-#     random.seed(a=initial_seed)  # reset initial seed
-#     maxvec = np.full(runs, 0)  # init vector for the maximum for each run
-#     for r in range(runs):  # for each run
-#         bins = np.full(n, 0)  # bins[i] is the occupancy of bin i; start from empty bins
-#         for i in range(n):  # for each ball
-#             if d == 1:
-#                 bins[random.randint(0, n - 1)] += 1  # drop ball randomly and update bins
-#             else:
-#                 occupancy = np.full(d, 0)
-#                 bin_indexes = np.full(d, 0)
-#                 for i in range(d):
-#                     bin_indexes[i] = random.randint(0, n - 1) # Uniformly extract d candidated indexes
-#                     occupancy[i] = bins[bin_indexes[i]] # Save the corresponding actual occupancy
-#                 bin_index = bin_indexes[ occupancy.argmin() ] # Select the bin within the lower occupancy
-#                 bins[bin_index] += 1
-#         maxvec[r] = bins.max()  # compute the max occupancy
-#     x_hat, _, CI_LB, CI_UB, rel_err, accuracy = confidenceInterval(maxvec, confidence_level)  # evaluate the confidence intervals
-#     if d==1:
-#         theo = np.log(n) / np.log(np.log(n))  # theoretical formula
-#         return theo, 3 * theo, CI_LB, x_hat, CI_UB, rel_err, accuracy
-#     else:
-#         theo = np.log(np.log(n)) / np.log(d)
-#         theo_UB = 3 * np.log(n) / np.log(np.log(n))
-#         return theo, theo_UB, CI_LB, x_hat, CI_UB, rel_err, accuracy
-
 def runSimulatorGeneralization(noBins, noBalls, seed, cl, runs, d, alpha):  # run the bins-and-ball model for n bins and for multiple runs
     random.seed(a=seed)  # reset initial seed
     maxvec = np.full(runs, 0)  # init vector for the maximum for each run
@@ -64,7 +37,6 @@ def runSimulatorGeneralization(noBins, noBalls, seed, cl, runs, d, alpha):  # ru
         theo = np.log(noBins) / np.log(np.log(noBins))  # theoretical formula
         return alpha * theo, 3 * alpha * theo, CI_LB, x_hat, CI_UB, rel_err, accuracy
     else:
-        # TODO
         theo = np.log(np.log(noBins)) / np.log(d)
         theo_UB = 3 * (np.log(noBins) / np.log(np.log(noBins)))
         return alpha * theo, alpha * theo_UB, CI_LB, x_hat, CI_UB, rel_err, accuracy
@@ -100,7 +72,6 @@ def main():
 
     # print input parameters
     print("*** INITIAL SETTINGS ***")
-    print("Bins/Balls number for the simulation:")
     print("n:", input_list)
     print("Seed:", seed)
     print("Confidence level:", confidence_level)
