@@ -3,10 +3,11 @@ import json
 import math
 import hashlib
 import random
+import sys
 
 def simulation(words):
-    digitsExp = 1
-    digitsExpMin = None    
+    bExp = 1
+    bExpMin = None    
     noWords = len(words)
 
     while(True):
@@ -15,32 +16,32 @@ def simulation(words):
         for word in words:
             word_hash = hashlib.md5(word.encode('utf-8')) # md5 hash
             word_hash_int = int(word_hash.hexdigest(), 16) # md5 hash in integer format
-            fingerprint = word_hash_int % (10**digitsExp) # Take only the last Bexp digits. n = 10**Bexp and map into [0,n-1] 
+            fingerprint = word_hash_int % (2**bExp) # Take only the last Bexp digits. n = 10**Bexp and map into [0,n-1] 
             if fingerprint in fingerprintSet:
-                print(f"Collision occured, digitsExp:{digitsExp} is not enough")
-                digitsExp += 1       
+                # print(f"Collision occured, bExp:{bExp} is not enough")
+                bExp += 1       
                 collision = True     
                 break
             else:
                 fingerprintSet.add(fingerprint)
 
-        if digitsExp > 39: # more than 39 means you want more than 39 last digits, but md5 has only 39 digits in integer format
-            print("digitsExp min is impossible to be found")
+        if 2**bExp > 10**39: # more than 39 means you want more than 39 last digits, but md5 has only 39 digits in integer format
             break
 
-        if collision is False and digitsExp <= 39:
-            digitsExpMin = digitsExp
-            print(f"digitsExp min is found: BexpMin:{digitsExpMin}")
+        if collision is False:
+            bExpMin = bExp
+            print(f"bExp min is found: BexpMin:{bExpMin}")
             break        
        
-    digitsTeo = math.log((noWords/0.5),10)
-    Bteo = math.log((noWords/0.5),2)
-    # print(f"digitsTeo:{digitsTeo} vs digitsExpMin:{digitsExpMin}")
+    if bExpMin is None:
+        print("bExp min is impossible to be found")
+        sys.exit(1)
 
-    n = 10**digitsExpMin 
+    bTeo = math.log((noWords/0.5),2)
+    n = 2**bExpMin 
     pFalsePositive = 1 - ( 1 - 1/n )**noWords
-    # print(f"P('False positive')={pFalsePositive}")
-    return digitsExpMin, digitsTeo, pFalsePositive, Bteo
+    
+    return bExpMin, bTeo, pFalsePositive
 
 def genInputList():
     input_list = []
@@ -66,19 +67,25 @@ def main():
 
     
     words = list(data.keys()) # Attention: I'm sure words are unique because python dictionary keys are unique!
+    random.shuffle(words)
+    random.shuffle(words)
     noWords = len(words)
     print(f"Total number of words: {noWords}")
     
-    experiments_result = {"noWords":[],"digitsExpMin":[],"digitsTeo":[],"pFalsePositive":[],"Bteo":[]}
+    experiments_result = {"noWords":[],"bExpMin":[],"bTeo":[],"pFalsePositive":[]}
     for numberOfWords in genInputList():
         print("*********************************")
-        print(f"Number of words: {numberOfWords}")
-        digitsExpMin, digitsTeo, pFalsePositive, Bteo = simulation(words[:numberOfWords])
+        bExpMin, bTeo, pFalsePositive = simulation(words[:numberOfWords]) 
         experiments_result["noWords"].append(numberOfWords)
-        experiments_result["digitsExpMin"].append(digitsExpMin)
-        experiments_result["digitsTeo"].append(digitsTeo)
+        experiments_result["bExpMin"].append(bExpMin)
+        experiments_result["bTeo"].append(bTeo)
         experiments_result["pFalsePositive"].append(pFalsePositive)
-        experiments_result["Bteo"].append(Bteo)
+
+        print("RESULTS:")
+        print(f"\tnoWords: {numberOfWords}")
+        print(f"\tbExpMin: {bExpMin}")
+        print(f"\tbTeo: {round(bTeo, 2)}")
+        print(f"\tpFalsePositive: {pFalsePositive}")
 
     
     json.dump(experiments_result, open("experiments_result.txt","w"))
