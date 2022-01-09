@@ -5,6 +5,7 @@ import hashlib
 import random
 import sys
 from pympler import asizeof as p
+import pandas as pd
 
 def simulation(words):
     bExp = 1
@@ -31,6 +32,7 @@ def simulation(words):
                 fingerprintSet.add(fingerprint)
 
         if 2**bExp > 10**39: # more than 39 means you want more than 39 last digits, but md5 has only 39 digits in integer format
+            print("ERR: IMPOSSIBLE TO FIND")
             break
 
         if collision is False:
@@ -52,10 +54,10 @@ def simulation(words):
 
 def genInputList():
     input_list = []
-    for i in (2, 3, 4, 5):
-        a = [x*10**i for x in (1, 2)]
+    for i in (2, 3, 4,5):
+        a = [x*10**i for x in (1,2)]
         input_list.extend(a)
-
+    input_list.pop()
     return input_list
 
 
@@ -67,13 +69,16 @@ def main():
     seed = args.seed
     random.seed(seed)
 
-    # Load words
-    data = json.load(open("words_dictionary.json")) # Words are stored as keys with value equal to 1 
-    
-    words = list(data.keys()) # Attention: I'm sure words are unique because python dictionary keys are unique!
-    random.shuffle(words)
-    random.shuffle(words)
-    noWords = len(words)
+    # Load titles
+    data_df = pd.read_csv('data.tsv',sep='\t') 
+    mask = (data_df['region']=="IT")
+    df = data_df.loc[mask, 'title'] # Take the title column where the region field is IT
+    titleSet = set(df) # Delete all the duplicates
+    titleList = list(titleSet) # Make it a list because list supports more operations
+
+    random.shuffle(titleList)
+    random.shuffle(titleList)
+    noWords = len(titleList)
     print("INPUT PARAMETERS:")
     print(f"\tSeed: {seed}")
     print(f"\tTotal number of words: {noWords}")
@@ -89,7 +94,7 @@ def main():
 
     for numberOfWords in genInputList():
         print("*********************************")
-        bExpMin, bTeo, pFalsePositive, fingerprintSetBytesSize, wordsSetBytesSize = simulation(words[:numberOfWords]) 
+        bExpMin, bTeo, pFalsePositive, fingerprintSetBytesSize, wordsSetBytesSize = simulation(titleList[:numberOfWords]) 
         experiments_result["noWords"].append(numberOfWords)
         experiments_result["bExpMin"].append(bExpMin)
         experiments_result["bTeo"].append(bTeo)
@@ -106,7 +111,7 @@ def main():
         print(f"\twordsSetBytesSize: {round(wordsSetBytesSize/(2**10),2)} Kbytes")
 
     
-    json.dump(experiments_result, open("experiments_result.txt","w"))
+    json.dump(experiments_result, open("resultLab9.txt","w"))
 
 if __name__ == "__main__":
     main()
