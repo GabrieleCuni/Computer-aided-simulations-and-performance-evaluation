@@ -40,7 +40,6 @@ def simulation(words, b):
     fingerprintSetBytesSize = p.asizeof(fingerprintSet) # Bytes
     wordsSetBytesSize = p.asizeof(wordsSet) # Bytes
     bitArrayByteSize = p.asizeof(bitArray) # Bytes
-    # bTeo = math.log((noWords/0.5),2) # WRONG
     bTeo = math.log((noWords/1.17)**2,2) # RIGHT
     pFalsePositive = 1 - ( 1 - 1/n )**noWords
     pSimFalsePositive = bitArray.count(1) / n
