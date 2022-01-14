@@ -40,20 +40,20 @@ def simulation(words, b):
     fingerprintSetBytesSize = p.asizeof(fingerprintSet) # Bytes
     wordsSetBytesSize = p.asizeof(wordsSet) # Bytes
     bitArrayByteSize = p.asizeof(bitArray) # Bytes
-    bTeo = math.log((noWords/1.17)**2,2) # RIGHT
+    bTeo = math.ceil(math.log((noWords/1.17)**2,2)) # RIGHT
     pFalsePositive = 1 - ( 1 - 1/n )**noWords
     pSimFalsePositive = bitArray.count(1) / n
     
     return pSimFalsePositive, bTeo, pFalsePositive, fingerprintSetBytesSize, wordsSetBytesSize, bitArrayByteSize
 
-def genInputList(noWords):
-    input_list = []
-    for i in (2, 3, 4, 5):
-        a = [x*10**i for x in (1, 2)]
-        input_list.extend(a)
-    input_list.append(noWords)
+# def genInputList(noWords):
+#     input_list = []
+#     for i in (2, 3, 4, 5):
+#         a = [x*10**i for x in (1, 2)]
+#         input_list.extend(a)
+#     input_list.append(noWords)
 
-    return input_list
+#     return input_list
 
 
 def main():
