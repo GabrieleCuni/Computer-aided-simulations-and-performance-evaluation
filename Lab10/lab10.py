@@ -7,15 +7,15 @@ import sys
 from pympler import asizeof as p
 from bitarray import bitarray
 
+def getActualFPsize(fingerprintSet):
+    for fingerprint in fingerprintSet:
+        actualFPsize = p.asizeof(fingerprint)
+        break
+
+    return actualFPsize
+
 def simulation(words, b):    
     noWords = len(words)
-    # To confront fingerprintSet size vs words size both must be the same data structure type, because a set with the same elements of a list
-    # is bigger than a list in term of memory occupation. 
-    # So I made words, that is a list, a set and below I use wordsSet to compare with fingerprintSet
-    wordsSet = set(words) 
-    
-    collision = False
-    count = 0
     fingerprintSet = set()
     n = 2**b 
     bitArray = bitarray(n)
@@ -26,35 +26,19 @@ def simulation(words, b):
         word_hash = hashlib.md5(word.encode('utf-8')) # md5 hash
         word_hash_int = int(word_hash.hexdigest(), 16) # md5 hash in integer format
         fingerprint = word_hash_int % (2**b) # Take only the last digits. n = 2**b and map into [0,n-1] 
-        if fingerprint in fingerprintSet:    
-            collision = True  
-            count += 1
+        bitArray[fingerprint] = 1    
         fingerprintSet.add(fingerprint)
-        bitArray[fingerprint] = 1
-
-    if collision is False:
-        print(f"b:{b} makes no collisions")   
-    else:
-        print(f"Collision occured {count} times, b:{b} is not enough")
-
-    fingerprintSetBytesSize = p.asizeof(fingerprintSet) # Bytes
-    wordsSetBytesSize = p.asizeof(wordsSet) # Bytes
-    bitArrayByteSize = p.asizeof(bitArray) # Bytes
-    bTeo = math.ceil(math.log((noWords/1.17)**2,2)) # RIGHT
-    pFalsePositive = 1 - ( 1 - 1/n )**noWords
-    pSimFalsePositive = bitArray.count(1) / n
     
-    return pSimFalsePositive, bTeo, pFalsePositive, fingerprintSetBytesSize, wordsSetBytesSize, bitArrayByteSize
-
-# def genInputList(noWords):
-#     input_list = []
-#     for i in (2, 3, 4, 5):
-#         a = [x*10**i for x in (1, 2)]
-#         input_list.extend(a)
-#     input_list.append(noWords)
-
-#     return input_list
-
+    pFPTheo = 1 - ( 1 - 1/n )**noWords
+    pFPSim = bitArray.count(1) / n
+    bsTheoByte = n / 8
+    bsSimByte = p.asizeof(bitArray) # Bytes
+    fpSimByte = p.asizeof(fingerprintSet)
+    fpTheoByte  = math.ceil( (b * len(fingerprintSet)) / 8 )
+    actualFPsize = getActualFPsize(fingerprintSet)
+    fpTheoExpectedByte = actualFPsize * len(fingerprintSet)
+    
+    return pFPTheo, pFPSim, bsTheoByte, bsSimByte, fpSimByte, fpTheoByte, actualFPsize, fpTheoExpectedByte
 
 def main():
     parser = argparse.ArgumentParser()
@@ -79,36 +63,39 @@ def main():
     
     experiments_result = {
         "b":[],
-        "bTeo":[],
-        "pSimFalsePositive": [],
-        "pFalsePositive":[],
-        "fingerprintSetBytesSize":[],
-        "wordsSetBytesSize":[],
-        "bitArrayByteSize":[]
+        "pFPTheo":[],
+        "pFPSim":[],
+        "bsTheoByte":[],
+        "bsSimByte":[],
+        "fpSimByte":[],
+        "fpTheoByte":[],
+        "fpTheoExpectedByte":[]
     }    
 
     for b in experimetList:
         print("*********************************")
-        pSimFalsePositive, bTeo, pFalsePositive, fingerprintSetBytesSize, wordsSetBytesSize, bitArrayByteSize = simulation(words, b) 
+        pFPTheo, pFPSim, bsTheoByte, bsSimByte, fpSimByte, fpTheoByte, actualFPsize, fpTheoExpectedByte = simulation(words, b) 
         experiments_result["b"].append(b)
-        experiments_result["bTeo"].append(bTeo)
-        experiments_result["pSimFalsePositive"].append(pSimFalsePositive)
-        experiments_result["pFalsePositive"].append(pFalsePositive)
-        experiments_result["fingerprintSetBytesSize"].append(fingerprintSetBytesSize)
-        experiments_result["wordsSetBytesSize"].append(wordsSetBytesSize)
-        experiments_result["bitArrayByteSize"].append(bitArrayByteSize)
+        experiments_result["pFPTheo"].append(pFPTheo)
+        experiments_result["pFPSim"].append(pFPSim)
+        experiments_result["bsTheoByte"].append(bsTheoByte)
+        experiments_result["bsSimByte"].append(bsSimByte)
+        experiments_result["fpSimByte"].append(fpSimByte)
+        experiments_result["fpTheoByte"].append(fpTheoByte)
+        experiments_result["fpTheoExpectedByte"].append(fpTheoExpectedByte)
 
         print("RESULTS:")
         print(f"\tb: {b}")
-        print(f"\tbTeo: {round(bTeo, 2)}")
-        print(f"\tpSimFalsePositive: {pSimFalsePositive}")
-        print(f"\tpFalsePositive: {pFalsePositive}")
-        print(f"\tfingerprintSetBytesSize: {round(fingerprintSetBytesSize/(2**10),2)} Kbytes")
-        print(f"\twordsSetBytesSize: {round(wordsSetBytesSize/(2**10),2)} Kbytes")
-        print(f"\tbitArrayByteSize: {round(bitArrayByteSize/(2**10),2)} Kbytes")
+        print(f"\tpFPTheo: {pFPTheo}")
+        print(f"\tpFPSim: {pFPSim}")
+        print(f"\tbsTheoByte: {int(round(bsTheoByte/(2**10),2))} KB")
+        print(f"\tbsSimByte: {int(round(bsSimByte/(2**10),2))} KB")
+        print(f"\tfpTheoByte: {int(round(fpTheoByte/(2**10),2))} KB")
+        print(f"\tfpTheoExpectedByte: {int(round(fpTheoExpectedByte/(2**10),2))} KB")
+        print(f"\tfpSimByte: {int(round(fpSimByte/(2**10),2))} KB")
+        print(f"\tactualFPsize: {actualFPsize}")     
 
-    
-    json.dump(experiments_result, open("simResults.txt","w"))
+    json.dump(experiments_result, open("lab10Results.txt","w"))
 
 if __name__ == "__main__":
     main()
