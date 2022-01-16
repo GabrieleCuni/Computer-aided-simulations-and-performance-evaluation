@@ -3,15 +3,16 @@ import json
 import math
 import hashlib
 import random
-import sys
 from pympler import asizeof as p
 from bitarray import bitarray
 
+# Compute the actual size of the fingerprint in bytes which is stored as integer
 def getActualFPsize(fingerprintSet):
+    dimensions = set()
     for fingerprint in fingerprintSet:
-        actualFPsize = p.asizeof(fingerprint)
-        break
-
+        dimensions.add(p.asizeof(fingerprint))
+    actualFPsize = max(dimensions)
+    print(f"fingerprint dimensions: {dimensions}, actualFPsize: {actualFPsize}")
     return actualFPsize
 
 def simulation(words, b):    
@@ -19,6 +20,7 @@ def simulation(words, b):
     fingerprintSet = set()
     n = 2**b 
     bitArray = bitarray(n)
+    # Initialize all bits to zero
     for i in range(n):
         bitArray[i] = 0
 
@@ -26,9 +28,10 @@ def simulation(words, b):
         word_hash = hashlib.md5(word.encode('utf-8')) # md5 hash
         word_hash_int = int(word_hash.hexdigest(), 16) # md5 hash in integer format
         fingerprint = word_hash_int % (2**b) # Take only the last digits. n = 2**b and map into [0,n-1] 
-        bitArray[fingerprint] = 1    
+        bitArray[fingerprint] = 1 # Set bit to one  
         fingerprintSet.add(fingerprint)
     
+    # Compute all the output parameters
     pFPTheo = 1 - ( 1 - 1/n )**noWords
     pFPSim = bitArray.count(1) / n
     bsTheoByte = n / 8
@@ -93,7 +96,7 @@ def main():
         print(f"\tfpTheoByte: {int(round(fpTheoByte/(2**10),2))} KB")
         print(f"\tfpTheoExpectedByte: {int(round(fpTheoExpectedByte/(2**10),2))} KB")
         print(f"\tfpSimByte: {int(round(fpSimByte/(2**10),2))} KB")
-        print(f"\tactualFPsize: {actualFPsize}")     
+        print(f"\tactualFPsize: {actualFPsize} Byte")     
 
     json.dump(experiments_result, open("lab10Results.txt","w"))
 
