@@ -18,6 +18,7 @@ import argparse
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-a", action="store_true", help="Optional one")
+    parser.add_argument("-b", action="store_true", help="Optional two")
     args = parser.parse_args()
 
     data = json.load(open("lab11Results.txt"))
@@ -50,6 +51,17 @@ def main():
         plt.ylabel("Probability of false positive")
         plt.legend()
         plt.savefig("pFPvsK2.png")
+        plt.show()
+        sys.exit(0)
+
+    if args.b is True:
+        d = json.load(open("lab11ResultsOptional2.txt"))
+        # print(d["noWords"][100000], d["distEl"][100000])
+        plt.plot(d["noWords"], d["distEl"])
+        plt.title("Distinct Elements vs number of words inserted")
+        plt.xlabel("Number of words inserted")
+        plt.ylabel("Number of distinct elements")
+        plt.savefig("distEl.png")
         plt.show()
         sys.exit(0)
 

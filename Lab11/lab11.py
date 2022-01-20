@@ -75,12 +75,40 @@ def optionalOne(m, experimetList):
         exp.append(tmp)
     return exp, kOptList, pFPList
 
+def optionalTwo(words, b):
+    noWords = len(words)    
+    n = 2**b 
+    kOpt = math.ceil( (n/noWords) * math.log(2) )
+    bitArray = bitarray(n)
+    for i in range(n):
+        bitArray[i] = 0
+
+    d = {
+        "noWords":[],
+        "distEl":[]
+    }
+    count = 0
+    print("************************************")
+    for word in words:
+        count += 1
+        word_hash = hashlib.md5(word.encode('utf-8')) # md5 hash
+        word_hash_int = int(word_hash.hexdigest(), 16) # md5 hash in integer format
+        all_bits_to_update = compute_all_hashes(word_hash_int, kOpt, b) # compute kOpt hash values on b bits
+
+        bitArray = bloomFilterInsertion(bitArray, all_bits_to_update, kOpt)
+        distEl = (-n/kOpt) * math.log(1-(bitArray.count(1)/n))
+        d["noWords"].append(count)
+        d["distEl"].append(distEl)
+        print(f"\tInserted Words: {count}, distinct Elements Theo: {int(distEl)}", end="\r")
+    
+    return d
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--seed', type=int, default=42, help='Initial Seed')
     parser.add_argument("-a", action="store_true", help="Optional one")
+    parser.add_argument("-b", action="store_true", help="Optional two")
     args = parser.parse_args()
 
     seed = args.seed
@@ -104,6 +132,16 @@ def main():
         }
         json.dump(option1Dict, open("lab11ResultsOptional1.txt","w"))
         print("lab11ResultsOptional1.txt made")
+        sys.exit(0)
+
+    if args.b is True:
+        print("INPUT PARAMETERS:")
+        print(f"\tSeed: {seed}")
+        print(f"\tTotal number of words: {len(words[:170000])}")    
+        print(f"\tb: 23")
+        d = optionalTwo(words[:170000], 23)
+        json.dump(d, open("lab11ResultsOptional2.txt","w"))
+        print("lab11ResultsOptional2.txt made")
         sys.exit(0)
 
     print("INPUT PARAMETERS:")
