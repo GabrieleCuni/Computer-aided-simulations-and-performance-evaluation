@@ -89,6 +89,7 @@ def optionalTwo(words, b):
     }
     count = 0
     print("************************************")
+    print("OUTPUT PARAMETERS:")
     for word in words:
         count += 1
         word_hash = hashlib.md5(word.encode('utf-8')) # md5 hash
@@ -96,10 +97,12 @@ def optionalTwo(words, b):
         all_bits_to_update = compute_all_hashes(word_hash_int, kOpt, b) # compute kOpt hash values on b bits
 
         bitArray = bloomFilterInsertion(bitArray, all_bits_to_update, kOpt)
-        distEl = (-n/kOpt) * math.log(1-(bitArray.count(1)/n))
-        d["noWords"].append(count)
-        d["distEl"].append(distEl)
-        print(f"\tInserted Words: {count}, distinct Elements Theo: {int(distEl)}", end="\r")
+        
+        if count % 20000 == 0:
+            distEl = (-n/kOpt) * math.log(1-(bitArray.count(1)/n))
+            d["noWords"].append(count)
+            d["distEl"].append(distEl)
+            print(f"\tInserted Words: {count}, distinct Elements Theo: {int(distEl)}")
     
     return d
 
@@ -130,16 +133,16 @@ def main():
             "kOptList":kOptList,
             "pFPList":pFPList
         }
-        json.dump(option1Dict, open("lab11ResultsOptional1.txt","w"))
+        json.dump(option1Dict, open("lab11ResultsOptional1.txt","w"))        
         print("lab11ResultsOptional1.txt made")
         sys.exit(0)
 
     if args.b is True:
         print("INPUT PARAMETERS:")
         print(f"\tSeed: {seed}")
-        print(f"\tTotal number of words: {len(words[:170000])}")    
-        print(f"\tb: 23")
-        d = optionalTwo(words[:170000], 23)
+        print(f"\tTotal number of words: {len(words)}")    
+        print(f"\tb: 19")
+        d = optionalTwo(words, 19)
         json.dump(d, open("lab11ResultsOptional2.txt","w"))
         print("lab11ResultsOptional2.txt made")
         sys.exit(0)

@@ -57,10 +57,11 @@ def main():
     if args.b is True:
         d = json.load(open("lab11ResultsOptional2.txt"))
         # print(d["noWords"][100000], d["distEl"][100000])
-        plt.plot(d["noWords"], d["distEl"])
-        plt.title("Distinct Elements vs number of words inserted")
+        plt.plot(d["noWords"], d["distEl"], marker="o")
+        plt.title("b = 23")
         plt.xlabel("Number of words inserted")
         plt.ylabel("Number of distinct elements")
+        plt.grid()
         plt.savefig("distEl.png")
         plt.show()
         sys.exit(0)
@@ -103,23 +104,6 @@ def main():
     plt.ylabel("Memory occupancy [KB]")
     plt.savefig("memLab11.png")
     plt.show()
-
-    
-
-    # plt.figure()
-    
-    # plt.plot(data["b"], np.array(data["bsSimByte"])/(2**20), linewidth=2, alpha=0.5, marker='o', label="Bit Array simulation")
-    # plt.plot(data["b"], np.array(data["bsTheoByte"])/(2**20),linewidth=3, linestyle="dotted", label="Bit Array theoretical")
-    # plt.plot(data["b"], np.array(data["fpSimByte"])/(2**20), marker='o', alpha=0.5, label="Fingerprint Set simulation")
-    # plt.plot(data["b"], np.array(data["fpTheoByte"])/(2**20), linestyle="dotted",color="black", label="Fingerprint theoretical")
-    # plt.plot(data["b"], np.array(data["fpTheoExpectedByte"])/(2**20), linestyle="dotted", label="Fingerprint as integer theoretical")
-    # plt.yscale("log")
-    # plt.grid()
-    # plt.legend()
-    # plt.xlabel("Number of bits b")
-    # plt.ylabel("Memory occupancy [MB]")
-    # plt.savefig("mem.png")
-    # plt.show()
     
 if __name__ == "__main__":
     main()
