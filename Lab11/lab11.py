@@ -28,13 +28,6 @@ def compute_all_hashes(md5, num_hashes, b):
         md5 = md5 // (2 ** 3) # right-shift the md5 by 3 bits
     return bits_to_update
 
-
-# # compute the hash
-# word_hash = hashlib.md5('ciao'.encode('utf-8')) # example for 'ciao'
-# word_hash_int = int(word_hash.hexdigest(), 16) # compute the hash
-# all_bits_to_update=compute_all_hashes(word_hash_int, 32, 24) # compute 32 hash values on 24 bits
-# print(all_bits_to_update) # show the obtained hash values
-
 def bloomFilterInsertion(bitArray, all_bits_to_update, k):
     for j in range(k):
         bitArray[all_bits_to_update[j]] = 1
@@ -66,12 +59,21 @@ def simulation(words, b):
     return pFPSim, pFPTheo, bfSimByte, bfTheoByte, bsTheoByte, ftTheoByte, kOpt
 
 def optionalOne(m, experimetList):
-    exp = np.empty(shape=(len(experimetList),len(list(range(1,33)))), dtype=np.float64)
+    exp = []
+    kOptList = []
+    pFPList = []
     for b in experimetList:
+        n = 2**b
+        kOpt = math.ceil( (n/m) * math.log(2))
+        print(f"b = {b} -> kOpt = {kOpt}")
+        kOptList.append(  kOpt )
+        pFPList.append( ( 1 - math.exp((-kOpt*m)/n) )**kOpt )
+        tmp = []
         for k in range(1,33): # [1,33)
-            n = 2**b
-            exp[b][k] =  ( 1 - math.exp((-k*m)/n) )**k
-    return exp
+            pFP = ( 1 - math.exp((-k*m)/n) )**k
+            tmp.append(pFP)
+        exp.append(tmp)
+    return exp, kOptList, pFPList
 
 
 
@@ -94,7 +96,15 @@ def main():
     experimetList = [19, 20, 21, 22, 23]
 
     if args.a is True:
-        optionalOne(noWords, experimetList)
+        exp, kOptList, pFPList= optionalOne(noWords, experimetList)
+        option1Dict={
+            "exp":exp,
+            "kOptList":kOptList,
+            "pFPList":pFPList
+        }
+        json.dump(option1Dict, open("lab11ResultsOptional1.txt","w"))
+        print("lab11ResultsOptional1.txt made")
+        sys.exit(0)
 
     print("INPUT PARAMETERS:")
     print(f"\tSeed: {seed}")
