@@ -49,6 +49,8 @@ class Measure:
         self.ut = NAveraegUser
         self.oldT = OldTimeEvent
         self.delay = AverageDelay
+        self.userLost = 0
+        self.userCount = 0
         
 # ******************************************************************************
 # Client
@@ -88,12 +90,15 @@ def arrival(time, FES, queue, arrivalTime, b):
     if users < b:
         # update the state variable, by increasing the no. of clients by 1
         users += 1
-    
-    # create a record for the client
-    client = Client(TYPE1,time)
+        # create a record for the client
+        client = Client(TYPE1,time)
 
-    # insert the record in the queue
-    queue.append(client)
+        # insert the record in the queue
+        queue.append(client)
+    else:
+        data.userLost += 1
+    data.userCount += 1    
+    
 
     # if the server is idle start the service
     if users==1:
@@ -107,20 +112,20 @@ def arrival(time, FES, queue, arrivalTime, b):
 def departure(time, FES, queue):
     global users
 
-    # get the first element from the queue
-    client = queue.pop(0)
-        
-    # cumulate statistics
-    data.dep += 1
-    data.ut += users*(time-data.oldT)
-    data.oldT = time
-    data.delay += (time-client.arrival_time)
-
-    # update the state variable, by decreasing the no. of clients by 1
-    users -= 1
-    
     # check whether there are more clients to in the queue
-    if users >0:
+    if users > 0:
+        # get the first element from the queue
+        client = queue.pop(0)
+            
+        # cumulate statistics
+        data.dep += 1
+        data.ut += users*(time-data.oldT)
+        data.oldT = time
+        data.delay += (time-client.arrival_time)
+
+        # update the state variable, by decreasing the no. of clients by 1
+        users -= 1    
+
         # sample the service time
         service_time = random.expovariate(1.0/SERVICE)
         # schedule the departure of the client
@@ -150,15 +155,16 @@ seed = 42
 threshold = 25
 random.seed(seed)
 
-plt.figure()
 for b in [1,5,10]:
     res = {
         "load":[],
-        "simAvgDelay":[]
+        "simAvgDelay":[],
+        "pLossSim":[],
+        "pLossTheo":[]
     } 
     print("*******************************************************")
     print(f"b: {b}")
-    for i in range(0,20):
+    for i in range(0,40,4): # range(0,100,10)
         users=0 
         time = 0
         queue=[]
@@ -172,19 +178,39 @@ for b in [1,5,10]:
         simulation(arrivalTime, b)
 
         simAvgDelay = data.delay / data.dep
+        pSim = data.userLost / data.userCount      
+        pTheo = 1-((data.dep+len(queue))/data.arr)
 
         res["simAvgDelay"].append(simAvgDelay) 
+        res["pLossSim"].append(pSim)
+        res["pLossTheo"].append(pTheo)
         
-        print(f"\tLoad: {round(load,2)}, simAvgDelay: {round(simAvgDelay,2)}")
-
+        print(f"\tLoad: {round(load,2)}, simAvgDelay: {round(simAvgDelay,2)}, pLossSim: {round(pSim,2)}")
+    
+    plt.figure(1)
     plt.plot(res["load"], res["simAvgDelay"], marker="o", label=f"B={b}")
+
+    plt.figure(2)
+    plt.plot(res["load"], res["pLossSim"], marker="o", label=f"simulate B={b}")
+    plt.plot(res["load"], res["pLossTheo"], linestyle="--", label=f"Theory B={b}", alpha=0.2)
+
+plt.figure(1)
 plt.xlabel("Load")
 plt.ylabel("Average Delay")
 plt.title(f"seed: {seed}, Max simulation time: {SIM_TIME}")
 plt.legend()
 plt.grid()
 plt.savefig("DelayVsLoad_finiteCapacity.png")
-plt.show()
+plt.close(1)
+
+plt.figure(2)
+plt.xlabel("Load")
+plt.ylabel("Probability that a customer is lost")
+plt.title(f"seed: {seed}, Max simulation time: {SIM_TIME}")
+plt.legend()
+plt.grid()
+plt.savefig("pLossVsLoad_finiteCapacity.png")
+plt.close(2)
 
 
     
