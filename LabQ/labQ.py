@@ -15,6 +15,7 @@
 
 
 import random
+import numpy as np
 from queue import PriorityQueue
 from matplotlib import pyplot as plt
 
@@ -49,6 +50,9 @@ class Measure:
         self.oldT = OldTimeEvent
         self.delay = AverageDelay
         self.idleTime = idleTime
+        self.delayBelowCount = 0
+        self.delayCount = 0
+        self.userFrequencySet = dict()
         
 # ******************************************************************************
 # Client
@@ -103,6 +107,11 @@ def arrival(time, FES, queue, arrivalTime):
         # schedule the departure of the client
         FES.put((time + service_time, "departure"))
 
+    if users not in data.userFrequencySet.keys():
+        data.userFrequencySet[users] = 1
+    else:
+        data.userFrequencySet[users] += 1
+
 
 # ******************************************************************************
 def departure(time, FES, queue):
@@ -116,6 +125,9 @@ def departure(time, FES, queue):
     data.ut += users*(time-data.oldT)
     data.oldT = time
     data.delay += (time-client.arrival_time)
+    if (time-client.arrival_time) < threshold:
+        data.delayBelowCount += 1
+    data.delayCount += 1
 
 
     # update the state variable, by decreasing the no. of clients by 1
@@ -148,7 +160,18 @@ def simulation(arrivalTime):
         elif event_type == "departure":
             departure(time, FES, queue)
 
+def plotUserDistribution(userDistribution, load):
+    plt.figure()
+    plt.bar(userDistribution.keys(), userDistribution.values())
+    plt.xlabel("Number of users")
+    plt.ylabel("Probability")
+    plt.title(f"Distribution of the number of users with load: {round(load,2)}")
+    plt.savefig(f"userDist_load={round(load,2)}.png")
+    plt.close()
+    
+
 seed = 42
+threshold = 25
 random.seed(seed)
 
 res = {
@@ -156,7 +179,8 @@ res = {
     "simAvgDelay":[],
     "theoAvgDelay":[],
     "pServerIdle":[],
-    "pServerIdleTheo":[]
+    "pServerIdleTheo":[],
+    "pDelayBelow":[]
 } 
 
 for i in range(0,20):
@@ -176,10 +200,24 @@ for i in range(0,20):
     theoAvgDelay = (1/(1.0/SERVICE-1.0/arrivalTime))
     pServerIdle = data.idleTime / SIM_TIME
     pServerIdleTheo = 1.0 - load
+    pDelayBelow = data.delayBelowCount / data.delayCount # Probability that the delay is below a given value
+
+    total = 0
+    userDistribution = dict()
+    for key in data.userFrequencySet.keys():
+        total += data.userFrequencySet[key]
+    for key in data.userFrequencySet.keys():
+        userDistribution[key] = data.userFrequencySet[key] / total
+
+    plotUserDistribution(userDistribution, load)
+
     res["simAvgDelay"].append(simAvgDelay)
     res["theoAvgDelay"].append(theoAvgDelay)
     res["pServerIdle"].append(pServerIdle)
     res["pServerIdleTheo"].append(pServerIdleTheo)
+    res["pDelayBelow"].append(pDelayBelow)
+
+    
 
     print("*******************************************************")
     print(f"\tLoad: {round(load,2)}")
@@ -187,6 +225,8 @@ for i in range(0,20):
     print(f"\ttheoAvgDelay: {round(theoAvgDelay,2)}")
     print(f"\tpServerIdle: {round(pServerIdle,2)}")
     print(f"\tpServerIdleTheo: {round(pServerIdleTheo,2)}")
+    print(f"\tpDelayBelow: {round(pDelayBelow,2)}")
+    # print(f"\tusers distrib: {userDistribution}")
 
 #*******************************************************
 # PLOT
