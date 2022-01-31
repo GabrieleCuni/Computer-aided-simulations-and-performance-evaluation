@@ -179,11 +179,11 @@ for b in [1,5,10]:
 
         simAvgDelay = data.delay / data.dep
         pSim = data.userLost / data.userCount      
-        pTheo = 1-((data.dep+len(queue))/data.arr)
+        # pTheo = 1-((data.dep+len(queue))/data.arr)
 
         res["simAvgDelay"].append(simAvgDelay) 
         res["pLossSim"].append(pSim)
-        res["pLossTheo"].append(pTheo)
+        # res["pLossTheo"].append(pTheo)
         
         print(f"\tLoad: {round(load,2)}, simAvgDelay: {round(simAvgDelay,2)}, pLossSim: {round(pSim,2)}")
     
@@ -192,7 +192,7 @@ for b in [1,5,10]:
 
     plt.figure(2)
     plt.plot(res["load"], res["pLossSim"], marker="o", label=f"simulate B={b}")
-    plt.plot(res["load"], res["pLossTheo"], linestyle="--", label=f"Theory B={b}", alpha=0.2)
+    # plt.plot(res["load"], res["pLossTheo"], linestyle="--", label=f"Theory B={b}", alpha=0.2)
 
 plt.figure(1)
 plt.xlabel("Load")
