@@ -254,51 +254,12 @@ plt.grid()
 plt.savefig("idleVsLoad.png")
 plt.show()
 
-
-
-# ******************************************************************************
-# Print outputs
-# ******************************************************************************
-
-
-# print("\n\n\n","*"*10,"  MEASUREMENTS  ","*"*10,"\n")
-# print("No. of users in the queue at the end of the simulation:",users,\
-#       "\nTot. no. of arrivals =",data.arr,"- Tot. no. of departures =",data.dep)
-# print("Actual queue size: ",len(queue))
-# if len(queue)>0:
-#     print("Arrival time of the last element in the queue:",queue[len(queue)-1].arrival_time)
-
-# print("\n\nLoad: ",LOAD)
-# print("Nominal arrival rate: ",1.0/ARRIVAL)
-# print("Measured arrival rate",data.arr/time,"\nMeasured departure rate: ",data.dep/time)
-# theorical=(1.0/ARRIVAL)/(1.0/SERVICE-1.0/ARRIVAL)
-# print("\n\nAverage number of users\nTheorical: ", theorical,\
-#       "  -  Empirical: ",data.ut/time)
-
-# theorical=1.0/(1.0/SERVICE-1.0/ARRIVAL)
-# print("Average delay \nTheorical= ",theorical,"  -  Empirical: ",data.delay/data.dep)
-
-# print("\n","*"*40)
-
-# ******************************************************************************
-# Initialization
-# ******************************************************************************
-#
-
-
-# #arrivals=0
-# # State variable: number of users
-# users=0  
-# # the simulation time 
-# time = 0
-# # Queue of the clients
-# queue=[]  
-# # Collect measurements
-# data = Measure(0,0,0,0,0)
-# # Future Event Set: the list of events in the form: (time, type)
-# FES = PriorityQueue()
-# # schedule the first arrival at t=0
-# FES.put((0, "arrival"))
-# # Initialize the random number generator    
-# random.seed(42)
-    
+plt.figure()
+plt.plot(res["load"], res["pDelayBelow"], marker="o", label="Simulation")
+plt.xlabel("Load")
+plt.ylabel("The probability that the delay is below a given value")
+plt.title(f"seed: {seed}, Max simulation time: {SIM_TIME}")
+plt.legend()
+plt.grid()
+plt.savefig("pDelayBelow.png")
+plt.show()
